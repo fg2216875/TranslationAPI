@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System.Text;
 using System.Text.RegularExpressions;
+using TranslationAPI.Interface;
 using TranslationAPI.Model;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -44,36 +45,9 @@ namespace WebApplication2.Service
             return chineseText;
         }        
     }
-
-    //public class TranslationResponse
+    //public interface IGeminiTranslationService
     //{
-    //    public string TranslatedText { get; set; }
+    //    Task<string> TranslateToChineseAsync(string englishText);
     //}
-
-    //public class GeminiApiResponse
-    //{
-    //    public List<Candidate> Candidates { get; set; }
-    //}
-
-    //public class Candidate
-    //{
-    //    public Content Content { get; set; }
-    //}
-
-    //public class Content
-    //{
-    //    public List<Part> Parts { get; set; }
-    //}
-
-    //public class Part
-    //{
-    //    public string Text { get; set; }
-    //}
-
-    public interface IGeminiTranslationService
-    {
-        //Task<string[]> SplitText(string textContent);
-        Task<string> TranslateToChineseAsync(string englishText);
-    }
     
 }

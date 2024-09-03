@@ -1,3 +1,4 @@
+using TranslationAPI.Interface;
 using WebApplication2.Service;
 
 var builder = WebApplication.CreateBuilder(args);

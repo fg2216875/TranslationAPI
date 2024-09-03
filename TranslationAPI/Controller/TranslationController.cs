@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.RegularExpressions;
+using TranslationAPI.Interface;
 using TranslationAPI.Model;
 using WebApplication2.Service;
 
@@ -71,25 +72,7 @@ namespace WebApplication2.Controller
                 string error = ex.ToString();
                 return error;
             }
-            
         }
 
-        //// 模擬翻譯方法 (將英文翻譯成中文)
-        //private string TranslateText(string text)
-        //{
-        //    // 假設翻譯邏輯，實際應調用翻譯API
-        //    return text.Replace("Hello", "你好").Replace("World", "世界");
-        //}
-
-        //public class HtmlContentRequest
-        //{
-        //    public string HtmlContent { get; set; }
-        //    public string TextContent { get; set; }
-        //}
-
-        //public class TranslationResponse
-        //{
-        //    public string TranslatedHtmlContent { get; set; }
-        //}
     }
 }
