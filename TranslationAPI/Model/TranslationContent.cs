@@ -14,6 +14,7 @@
     public class TranslationResponse
     {
         public string TranslatedHtmlContent { get; set; }
+        public Dictionary<string,string> TranslatedTextContent { get;set; }
     }
 
     public class GeminiApiResponse

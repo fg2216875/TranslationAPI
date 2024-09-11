@@ -45,33 +45,17 @@ namespace WebApplication2.Controller
             }
             string translatedText = await _translationService.TranslateToChineseAsync(request.TextContent);
             // 將翻譯後的文字替換到 HtmlContent 中
-            string translatedHtmlContent = ReplaceTextInHtml(request.HtmlContent, request.TextContent, translatedText);
+            //string translatedHtmlContent = _translationService.ReplaceTextInHtml(request.HtmlContent, request.TextContent, translatedText);
+            var dicTranslation = _translationService.SetTranslationText(request.TextContent, translatedText);
 
+            //return Ok(new TranslationResponse
+            //{
+            //    TranslatedHtmlContent = translatedHtmlContent
+            //});
             return Ok(new TranslationResponse
             {
-                TranslatedHtmlContent = translatedHtmlContent
+                TranslatedTextContent = dicTranslation
             });
-        }
-
-        // 將翻譯後的文字替換到 HtmlContent 中
-        private string ReplaceTextInHtml(string htmlContent, string originalText, string translatedText)
-        {
-            try
-            {
-                string result = htmlContent;
-                var originalTextArray = originalText.Split("\n", StringSplitOptions.RemoveEmptyEntries);
-                var translateTextArray = translatedText.Split("|", StringSplitOptions.RemoveEmptyEntries);
-                for (int i = 0; i < originalTextArray.Length; i++) { 
-                    result = Regex.Replace(result, originalTextArray[i], translateTextArray[i]);
-                }
- 
-                return result;
-            }
-            catch (Exception ex)
-            {
-                string error = ex.ToString();
-                return error;
-            }
         }
 
     }
