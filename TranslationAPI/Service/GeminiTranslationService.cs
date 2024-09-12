@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using TranslationAPI.Interface;
 using TranslationAPI.Model;
 using static System.Net.Mime.MediaTypeNames;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebApplication2.Service
 {
@@ -43,6 +44,44 @@ namespace WebApplication2.Service
             var result = await response.Content.ReadFromJsonAsync<GeminiApiResponse>();
             var chineseText = result?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
             return chineseText;
+        }  
+
+        /// <summary>
+        /// 將英文原文翻譯成繁體中文
+        /// </summary>
+        /// <param name="textNodes"></param>
+        /// <returns></returns>
+        public async Task<Dictionary<string,string>> TranslateToChineseAsync(TextNodes textNodes)
+        {
+            string englishText = "";
+            foreach (var textNode in textNodes.textNodes)
+            {
+                foreach (var kvp in textNode)
+                {
+                    // 處理每個節點的數據，合併成一個字串後再呼叫API進行翻譯
+                    englishText += kvp.Key + ": " + kvp.Value + "|"; 
+                }
+            }
+
+            var prompt = $"'|'符號是字串中的分隔線，將分隔線內的各個'英文'翻譯成繁體中文(zh_TW)，要保留'|'符號: \"{englishText}\"";
+            var request = new
+            {
+                contents = new[]
+                {
+                    new { parts = new[] { new { text = prompt } } }
+                }
+            };
+
+            var response = await _httpClient.PostAsJsonAsync(
+                $"models/gemini-pro:generateContent?key={_apiKey}",
+                request);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<GeminiApiResponse>();
+            var chineseText = result?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
+            var chineseDic = ConvertToDictionary(chineseText);
+
+            return chineseDic;
         }  
         
         // 將翻譯後的文字替換到 HtmlContent 中
@@ -90,10 +129,22 @@ namespace WebApplication2.Service
             }
             
         }
-    }
-    //public interface IGeminiTranslationService
-    //{
-    //    Task<string> TranslateToChineseAsync(string englishText);
-    //}
-    
+
+        /// <summary>
+        /// 將翻譯好的字串轉換成dictionary
+        /// </summary>
+        /// <param name="inputText"></param>
+        /// <returns></returns>
+        public Dictionary<string, string> ConvertToDictionary(string inputText)
+        {
+            string pattern = @"\{#(\d+)\}:\s*(.*?)(?=\||\z)";
+            var matches = Regex.Matches(inputText, pattern);
+
+            return matches.Cast<Match>()
+                .ToDictionary(
+                    m => $"{{#{m.Groups[1].Value}}}",
+                    m => m.Groups[2].Value.Trim()
+                );
+        }
+    } 
 }

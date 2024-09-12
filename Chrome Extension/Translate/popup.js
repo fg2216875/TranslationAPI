@@ -12,6 +12,7 @@ document.getElementById('replaceButton').addEventListener('click', function() {
 			chrome.scripting.executeScript({
 				target: { tabId: activeTab.id },
 				func: (translatedHtml) => {	
+					console.log(translatedHtml);
 					var nodes = document.getElementsByTagName("*");
 					for(var i = 0; i < nodes.length; i++) {
 						 var el = nodes[i];

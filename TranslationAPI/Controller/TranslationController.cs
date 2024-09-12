@@ -37,24 +37,17 @@ namespace WebApplication2.Controller
 
         [HttpPost]
         [Route("translate")]
-        public async Task<ActionResult<TranslationResponse>> Translate([FromBody] HtmlContentRequest request)
+        public async Task<ActionResult<TranslationResponse>> Translate([FromBody] RootObject TextNodes)
         {
-            if (string.IsNullOrEmpty(request.HtmlContent) || string.IsNullOrEmpty(request.TextContent))
+            if (TextNodes == null)
             {
                 return BadRequest("HtmlContent and TextContent cannot be null or empty.");
             }
-            string translatedText = await _translationService.TranslateToChineseAsync(request.TextContent);
-            // 將翻譯後的文字替換到 HtmlContent 中
-            //string translatedHtmlContent = _translationService.ReplaceTextInHtml(request.HtmlContent, request.TextContent, translatedText);
-            var dicTranslation = _translationService.SetTranslationText(request.TextContent, translatedText);
+            var translatedText = await _translationService.TranslateToChineseAsync(TextNodes.TextNodes);
 
-            //return Ok(new TranslationResponse
-            //{
-            //    TranslatedHtmlContent = translatedHtmlContent
-            //});
             return Ok(new TranslationResponse
             {
-                TranslatedTextContent = dicTranslation
+                TranslatedTextContent = translatedText
             });
         }
 
