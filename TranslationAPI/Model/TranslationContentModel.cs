@@ -10,14 +10,9 @@
         public List<TextNode> textNodes { get; set; }
     }
 
-    public class RootObject
-    {
-        public TextNodes TextNodes { get; set; }
-    }
     public class HtmlContentRequest
     {
-        public string HtmlContent { get; set; }
-        public string TextContent { get; set; }
+        public TextNodes HTMLTextNodes { get; set; }
     }
 
     public class TranslationResponse

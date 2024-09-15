@@ -1,4 +1,5 @@
-﻿using TranslationAPI.Model;
+﻿using System.Collections.Concurrent;
+using TranslationAPI.Model;
 
 namespace TranslationAPI.Interface
 {
@@ -9,12 +10,10 @@ namespace TranslationAPI.Interface
 
     public interface IGeminiTranslationService
     {
-        Task<string> TranslateToChineseAsync(string englishText);
+        Task<string> TranslateToChineseAsync(string[] textArray);
         Task<Dictionary<string,string>> TranslateToChineseAsync(TextNodes textNodes);
 
-        public string ReplaceTextInHtml(string htmlContent, string originalText, string translatedText);
-
-        public Dictionary<string, string> SetTranslationText(string originalText, string translatedText);
+        //public Dictionary<string, string> SetTranslationText(string originalText, string translatedText);
         Dictionary<string, string> ConvertToDictionary(string inputText);
     }
 }
