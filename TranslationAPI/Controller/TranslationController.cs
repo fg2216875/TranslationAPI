@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using TranslationAPI.Interface;
@@ -48,26 +49,35 @@ namespace WebApplication2.Controller
                 }
             }
             // 將字串依據 '|' 符號分割
-            string[] parts = englishText.Split('|');
+            string[] parts = englishText.TrimEnd('|').Split('|');
             // 計算每部分應該包含多少項目
-            //int itemsPerPart = (int)Math.Ceiling(parts.Length / 14.0);
-            var perPart = Math.Ceiling((decimal)parts.Length / 10);
-            // 將分割後的字串平均分成 9 個部分
+            //var perPart = Math.Ceiling((decimal)parts.Length / 15);
+            //List<string[]> engTextResult = new List<string[]>();
+            //for (int i = 0; i < perPart; i++)
+            //{
+            //    string[] chunk = parts.Skip(i * 15).Take(15).ToArray();
+            //    engTextResult.Add(chunk);
+            //}
+
+            //Gemini API免費版每分鐘可接收request次數為15次
+            int perPart = (int)Math.Ceiling(parts.Length / 15.0);
             List<string[]> engTextResult = new List<string[]>();
-            for (int i = 0; i < perPart; i++)
+            for (int i = 0; i < 15; i++)
             {
-                string[] chunk = parts.Skip(i * 10).Take(10).ToArray();
+                string[] chunk = parts.Skip(i * perPart).Take(perPart).ToArray();
                 engTextResult.Add(chunk);
             }
 
-            var tasks = engTextResult.Select(engTexts =>  _translationService.TranslateToChineseAsync(engTexts)).ToList();
+            //var tasks = engTextResult.Select(engTexts => _translationService.TranslateToChineseLocalAsync(engTexts)).ToList();
+            //await Task.WhenAll(tasks);
+            var tasks = engTextResult.Select(engTexts => _translationService.TranslateToChineseAsync(engTexts)).ToList();
             await Task.WhenAll(tasks);
 
             string chineseText = "";
             for (int i = 0; i < tasks.Count; i++) {
                 chineseText += tasks[i].Result.ToString() + "|";
             }
-             var translatedText = _translationService.ConvertToDictionary(chineseText);
+            var translatedText = _translationService.ConvertToDictionary(chineseText);
 
             return Ok(new TranslationResponse
             {

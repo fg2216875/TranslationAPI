@@ -13,11 +13,28 @@
     public class HtmlContentRequest
     {
         public TextNodes HTMLTextNodes { get; set; }
+        public string translateType { get; set; }
     }
 
     public class TranslationResponse
     {
         public Dictionary<string,string> TranslatedTextContent { get;set; }
+    }
+
+    public class LocalAPIResponse
+    {
+        public List<Choice> Choices { get; set; } 
+    }
+
+    public class Choice
+    {
+        public Message Message { get; set; } 
+    }
+
+    public class Message
+    {
+        public string Role { get; set; }
+        public string Content { get; set; }
     }
 
     public class GeminiApiResponse

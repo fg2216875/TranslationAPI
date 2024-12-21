@@ -1,4 +1,5 @@
-﻿using HtmlAgilityPack;
+﻿using DeepL;
+using HtmlAgilityPack;
 using Newtonsoft.Json;
 using System.Collections.Concurrent;
 using System.Text;
@@ -18,7 +19,7 @@ namespace WebApplication2.Service
         public GeminiTranslationService(HttpClient httpClient, IConfiguration configuration)
         {
             _httpClient = httpClient;
-            _apiKey = configuration["Gemini:ApiKey"];
+            _apiKey = configuration["Gemini:ApiKey"] ?? "";
             _httpClient.BaseAddress = new Uri("https://generativelanguage.googleapis.com/v1beta/");
         }
 
@@ -27,41 +28,41 @@ namespace WebApplication2.Service
         /// </summary>
         /// <param name="textNodes"></param>
         /// <returns></returns>
-        public async Task<Dictionary<string,string>> TranslateToChineseAsync(TextNodes textNodes)
-        {
-            string englishText = "";
-            foreach (var textNode in textNodes.textNodes)
-            {
-                foreach (var kvp in textNode)
-                {
-                    // 處理每個節點的數據，合併成一個字串後再呼叫API進行翻譯
-                    englishText += kvp.Key + ": " + kvp.Value + "|"; 
-                }
-            }
+        //public async Task<Dictionary<string,string>> TranslateToChineseAsync(TextNodes textNodes)
+        //{
+        //    string englishText = "";
+        //    foreach (var textNode in textNodes.textNodes)
+        //    {
+        //        foreach (var kvp in textNode)
+        //        {
+        //            // 處理每個節點的數據，合併成一個字串後再呼叫API進行翻譯
+        //            englishText += kvp.Key + ": " + kvp.Value + "|"; 
+        //        }
+        //    }
 
-            var prompt = $"'|'符號是字串中的分隔線，將分隔線內的各個'英文'翻譯成繁體中文(zh_TW)，要保留'|'符號: \"{englishText}\"";
-            var request = new
-            {
-                contents = new[]
-                {
-                    new { parts = new[] { new { text = prompt } } }
-                }
-            };
+        //    var prompt = $"'|'符號是字串中的分隔線，將分隔線內的各個'英文'翻譯成繁體中文(zh_TW)，要保留'|'符號: \"{englishText}\"";
+        //    var request = new
+        //    {
+        //        contents = new[]
+        //        {
+        //            new { parts = new[] { new { text = prompt } } }
+        //        }
+        //    };
 
-            var response = await _httpClient.PostAsJsonAsync(
-                $"models/gemini-pro:generateContent?key={_apiKey}",
-                request);
-            response.EnsureSuccessStatusCode();
+        //    var response = await _httpClient.PostAsJsonAsync(
+        //        $"models/gemini-pro:generateContent?key={_apiKey}",
+        //        request);
+        //    response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<GeminiApiResponse>();
-            var chineseText = result?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
-            var chineseDic = ConvertToDictionary(chineseText);
+        //    var result = await response.Content.ReadFromJsonAsync<GeminiApiResponse>();
+        //    var chineseText = result?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
+        //    var chineseDic = ConvertToDictionary(chineseText);
 
-            return chineseDic;
-        }  
+        //    return chineseDic;
+        //}  
         
         /// <summary>
-        /// 將英文原文翻譯成繁體中文
+        /// 使用Gemini API將英文翻譯成繁體中文
         /// </summary>
         /// <param name="textNodes"></param>
         /// <returns></returns>
@@ -89,6 +90,32 @@ namespace WebApplication2.Service
 
             return chineseText;
         }  
+
+        public async Task<string> TranslateToChineseLocalAsync(string[] textArray)
+        {
+            string englishText = string.Join("|", textArray);
+            var prompt = $"將分隔線'|'內的各個'英文'翻譯成繁體中文(zh_TW)，要保留'|'符號: \"{englishText}\"";
+            var request = new
+            {
+                model = "LM Studio Community/Meta-Llama-3-8B-Instruct-GGUF",
+                messages = new[] {
+                    new { role = "user", content = prompt }
+                },
+                temperature = 0.7,
+                max_tokens = -1,
+                stream = false
+            };
+    
+            var response = await _httpClient.PostAsJsonAsync(
+                "http://localhost:1234/v1/chat/completions",
+                request);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<LocalAPIResponse>();
+            var chineseText = result?.Choices[0].Message.Content;
+
+            return chineseText;
+        }
 
         //public Dictionary<string,string> SetTranslationText(string originalText, string translatedText)
         //{
