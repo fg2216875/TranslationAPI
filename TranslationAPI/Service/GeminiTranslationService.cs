@@ -20,7 +20,7 @@ namespace WebApplication2.Service
         {
             _httpClient = httpClient;
             _apiKey = configuration["Gemini:ApiKey"] ?? "";
-            _httpClient.BaseAddress = new Uri("https://generativelanguage.googleapis.com/v1beta/");
+            _httpClient.BaseAddress = new Uri(configuration["Gemini:URL"]);
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace WebApplication2.Service
             };
 
             var response = await _httpClient.PostAsJsonAsync(
-                $"models/gemini-pro:generateContent?key={_apiKey}",
+                $"models/gemini-1.5-flash:generateContent?key={_apiKey}",
                 request);
             response.EnsureSuccessStatusCode();
 
@@ -150,6 +150,8 @@ namespace WebApplication2.Service
         public Dictionary<string, string> ConvertToDictionary(string inputText)
         {
             string pattern = @"\{#(\d+)\}:\s*(.*?)(?=\||\z)";
+            //避免字串中出現"空白"或"換行符"影響轉換效果
+            inputText = inputText.Replace("\r\n", "").Replace("\n", "").Trim();
             var matches = Regex.Matches(inputText, pattern);
 
             return matches.Cast<Match>()

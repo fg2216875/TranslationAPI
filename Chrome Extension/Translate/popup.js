@@ -1,5 +1,5 @@
 document.getElementById('replaceButton').addEventListener('click', function() {
-    console.log("AAA");
+    //console.log("AAA");
     // 獲取當前的活動標籤
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         let activeTab = tabs[0];

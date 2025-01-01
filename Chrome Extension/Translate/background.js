@@ -3,7 +3,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         // 獲取當前頁面的 HTML 和 Text
         chrome.scripting.executeScript({
             target: { tabId: request.tabId },
-            func: () => {
+			func: () => {
+				//檢查字串是否含有英文大小寫
+				const containsEnglishLetters = (str) => {
+					return /[a-zA-Z]/.test(str);
+				};
+				
 				let htmlNodes = document.getElementsByTagName("*");
 				let textNodes = [];
 				let index = 0;
@@ -14,7 +19,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 					}
 					for (var j = 0; j < el.childNodes.length; j++) {
 						var node = el.childNodes[j];
-						if (node.nodeType === 3 && node.data.trim() != ''){
+						if (node.nodeType === 3 && containsEnglishLetters(node.data.trim())){
 							let keyStr = "{#" + index + "}";
 							textNodes.push({[keyStr]:node.data.trim()});
 							node.data = keyStr;
