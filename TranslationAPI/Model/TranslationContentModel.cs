@@ -13,6 +13,9 @@
     public class HtmlContentRequest
     {
         public TextNodes HTMLTextNodes { get; set; }
+        /// <summary>
+        /// 要使用的翻譯模型
+        /// </summary>
         public string translateType { get; set; }
     }
 

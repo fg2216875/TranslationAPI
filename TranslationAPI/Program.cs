@@ -9,8 +9,6 @@ using WebApplication2.Service;
 using LogLevel = NLog.LogLevel;
 
 var logger = LogManager.Setup().LoadConfigurationFromFile("NLog.config").GetCurrentClassLogger();
-logger.Info("應用程式已啟動");
-
 var builder = WebApplication.CreateBuilder(args);
 
 // 設定 NLog

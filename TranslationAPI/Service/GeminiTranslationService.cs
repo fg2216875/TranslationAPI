@@ -6,8 +6,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using TranslationAPI.Interface;
 using TranslationAPI.Model;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebApplication2.Service
 {
@@ -60,33 +58,42 @@ namespace WebApplication2.Service
 
         //    return chineseDic;
         //}  
-        
+
         /// <summary>
         /// 使用Gemini API將英文翻譯成繁體中文
         /// </summary>
         /// <param name="textNodes"></param>
         /// <returns></returns>
-        public async Task<string> TranslateToChineseAsync(string[] textArray)
+        public async Task<string> TranslateToChineseAsync(string[] textArray, string translateType)
         {
             string englishText = string.Join("|", textArray);
-            //var prompt = $"The '|' symbol is the delimiter in the string. Translate each 'English' word between the delimiters into Traditional Chinese (zh_TW), while keeping the '|' symbol: \"{englishText}\"";
+            string systemInstruction = "你是一個翻譯助手，回答只能輸出翻譯後的內容";
             var prompt = $"'|'符號是字串中的分隔線，將分隔線內的各個'英文'翻譯成繁體中文(zh_TW)，要保留'|'符號: \"{englishText}\"";
             var request = new
             {
                 contents = new[]
                 {
-                    new { parts = new[] { new { text = prompt } } }
+                    new { parts = new[] { 
+                        new { text = systemInstruction }, 
+                        new { text = prompt } } }
                 }
             };
 
-            var response = await _httpClient.PostAsJsonAsync(
-                $"models/gemini-1.5-flash:generateContent?key={_apiKey}",
-                request);
+            var model = string.Empty;
+            if (translateType == "Gemini2.0")
+            {
+                model = $"models/gemini-2.0-flash:generateContent?key={_apiKey}";
+            } else if (translateType == "Gemini2.0-lite") {
+                model = $"models/gemini-2.0-flash-lite:generateContent?key={_apiKey}";
+            } else {
+                model = $"models/gemini-1.5-flash:generateContent?key={_apiKey}";
+            }
+                 
+            var response = await _httpClient.PostAsJsonAsync(model,request);
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<GeminiApiResponse>();
             var chineseText = result?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
-            //var chineseDic = ConvertToDictionary(chineseText);
 
             return chineseText;
         }  
@@ -94,11 +101,12 @@ namespace WebApplication2.Service
         public async Task<string> TranslateToChineseLocalAsync(string[] textArray)
         {
             string englishText = string.Join("|", textArray);
-            var prompt = $"將分隔線'|'內的各個'英文'翻譯成繁體中文(zh_TW)，要保留'|'符號: \"{englishText}\"";
+            
+            var prompt = $"將分隔線'|'內的各個'原文'翻譯成繁體中文(zh_TW)，並保留'|'符號: \"{englishText}\"";
             var request = new
             {
                 model = "LM Studio Community/Meta-Llama-3-8B-Instruct-GGUF",
-                messages = new[] {
+                messages = new[] {  
                     new { role = "user", content = prompt }
                 },
                 temperature = 0.7,
@@ -117,31 +125,6 @@ namespace WebApplication2.Service
             return chineseText;
         }
 
-        //public Dictionary<string,string> SetTranslationText(string originalText, string translatedText)
-        //{
-        //    try
-        //    {
-        //        var originalTextArray = originalText.Split("\n", StringSplitOptions.RemoveEmptyEntries);
-        //        var translateTextArray = translatedText.Split("|", StringSplitOptions.RemoveEmptyEntries);
-        //        var dicTranslation = new Dictionary<string, string>();
-        //        for(int i = 0; i < originalTextArray.Length; i++)
-        //        {
-        //            if (dicTranslation.Keys.Contains(originalTextArray[i]))
-        //            {
-        //                continue;
-        //            }
-        //            dicTranslation.Add(originalTextArray[i], translateTextArray[i]);
-        //        }
-
-        //        return dicTranslation;
-        //    }catch(Exception ex)
-        //    {
-        //        ex.ToString();
-        //        return null;
-        //    }
-            
-        //}
-
         /// <summary>
         /// 將翻譯好的字串轉換成dictionary
         /// </summary>
@@ -159,6 +142,42 @@ namespace WebApplication2.Service
                     m => $"{{#{m.Groups[1].Value}}}",
                     m => m.Groups[2].Value.Trim()
                 );
+        }
+
+        public List<string[]> SplitText(HtmlContentRequest TextNodes)
+        {
+            string englishText = "";
+            foreach (var textNode in TextNodes.HTMLTextNodes.textNodes)
+            {
+                foreach (var kvp in textNode)
+                {
+                    // 處理每個節點的數據，合併成一個字串後再呼叫API進行翻譯
+                    englishText += kvp.Key + ": " + kvp.Value + "|"; 
+                }
+            }
+            // 將字串依據 '|' 符號分割
+            string[] parts = englishText.TrimEnd('|').Split('|');
+            // 計算每部分應該包含多少項目
+            //var perPart = Math.Ceiling((decimal)parts.Length / 15);
+            //List<string[]> engTextResult = new List<string[]>();
+            //for (int i = 0; i < perPart; i++)
+            //{
+            //    string[] chunk = parts.Skip(i * 15).Take(15).ToArray();
+            //    engTextResult.Add(chunk);
+            //}
+
+            //Gemini API免費版每分鐘可接收request次數為15次
+            int requestCount = 8;
+            //perPart 設定使用Gemini一次翻譯的數量
+            int perPart = (int)Math.Ceiling(parts.Length / Convert.ToDecimal(requestCount));
+            List<string[]> engTextResult = new List<string[]>();
+            for (int i = 0; i < requestCount; i++)
+            {
+                string[] chunk = parts.Skip(i * perPart).Take(perPart).ToArray();
+                engTextResult.Add(chunk);
+            }
+
+            return engTextResult;
         }
     } 
 }

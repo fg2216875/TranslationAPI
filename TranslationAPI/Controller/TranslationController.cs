@@ -10,6 +10,7 @@ using TranslationAPI.Model;
 using WebApplication2.Service;
 using Microsoft.Extensions.Logging;
 using NLog;
+using System.Diagnostics;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -38,44 +39,19 @@ namespace WebApplication2.Controller
         [Route("translate")]
         public async Task<ActionResult<TranslationResponse>> Translate([FromBody] HtmlContentRequest TextNodes)
         {
+            var stopwatch = Stopwatch.StartNew(); // 開始計時
             try
             {
                 if (TextNodes == null)
                 {
                     return BadRequest("HtmlContent and TextContent cannot be null or empty.");
                 }
-                string englishText = "";
-                foreach (var textNode in TextNodes.HTMLTextNodes.textNodes)
-                {
-                    foreach (var kvp in textNode)
-                    {
-                        // 處理每個節點的數據，合併成一個字串後再呼叫API進行翻譯
-                        englishText += kvp.Key + ": " + kvp.Value + "|"; 
-                    }
-                }
-                // 將字串依據 '|' 符號分割
-                string[] parts = englishText.TrimEnd('|').Split('|');
-                // 計算每部分應該包含多少項目
-                //var perPart = Math.Ceiling((decimal)parts.Length / 15);
-                //List<string[]> engTextResult = new List<string[]>();
-                //for (int i = 0; i < perPart; i++)
-                //{
-                //    string[] chunk = parts.Skip(i * 15).Take(15).ToArray();
-                //    engTextResult.Add(chunk);
-                //}
 
-                //Gemini API免費版每分鐘可接收request次數為15次
-                int perPart = (int)Math.Ceiling(parts.Length / 15.0);
-                List<string[]> engTextResult = new List<string[]>();
-                for (int i = 0; i < 15; i++)
-                {
-                    string[] chunk = parts.Skip(i * perPart).Take(perPart).ToArray();
-                    engTextResult.Add(chunk);
-                }
+                List<string[]> engTextResult = _translationService.SplitText(TextNodes);
 
                 //var tasks = engTextResult.Select(engTexts => _translationService.TranslateToChineseLocalAsync(engTexts)).ToList();
                 //await Task.WhenAll(tasks);
-                var tasks = engTextResult.Select(engTexts => _translationService.TranslateToChineseAsync(engTexts)).ToList();
+                var tasks = engTextResult.Select(engTexts => _translationService.TranslateToChineseAsync(engTexts,TextNodes.translateType)).ToList();
                 await Task.WhenAll(tasks);
 
                 string chineseText = "";
@@ -93,7 +69,11 @@ namespace WebApplication2.Controller
                 logger.Error(ex.ToString());
                 return StatusCode(500, new { error = "翻譯過程出現錯誤" });
             }
-            
+            finally
+            {
+                stopwatch.Stop();
+                logger.Info($" api/translate 使用模型: {TextNodes.translateType} 執行時間: {stopwatch.Elapsed.TotalSeconds:F2} s");
+            }
         }
 
     }

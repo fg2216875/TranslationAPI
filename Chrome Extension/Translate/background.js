@@ -1,9 +1,10 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'translate') {
+		let translateType = request.translateType;
         // 獲取當前頁面的 HTML 和 Text
         chrome.scripting.executeScript({
             target: { tabId: request.tabId },
-			func: () => {
+            func: () => {
 				//檢查字串是否含有英文大小寫
 				const containsEnglishLetters = (str) => {
 					return /[a-zA-Z]/.test(str);
@@ -26,6 +27,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 							index += 1;
 							continue; 
 						}
+						// if (node.nodeType === 3 && node.data.trim() != '' && node.data.trim() != '/'){
+							// let keyStr = "{#" + index + "}";
+							// textNodes.push({[keyStr]:node.data.trim()});
+							// node.data = keyStr;
+							// index += 1;
+							// continue; 
+						// }
 					}
 				}
 				//console.log(textNodes);
@@ -35,7 +43,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             }
         }, (results) => {
             let textNodes = results[0].result;
-			console.log(textNodes);
+			//console.log(results[0]);
 			// 使用 fetch API 向後端 API 發送請求
 			fetch("https://localhost:7010/api/Translation/translate", {
 				method: 'POST',
@@ -43,9 +51,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					TextNodes: textNodes
+					HTMLTextNodes: textNodes,
+					translateType:translateType
 				})
-			}).then(response => response.json())
+			}).then(response => {
+				if (!response.ok){
+					console.log("translate fail");
+				}
+				return response.json();
+			})
 			.then(data => {
 				console.log(data);
 				sendResponse(data);
@@ -59,3 +73,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 });
+
