@@ -54,11 +54,7 @@ namespace WebApplication2.Controller
                 var tasks = engTextResult.Select(engTexts => _translationService.TranslateToChineseAsync(engTexts,TextNodes.translateType)).ToList();
                 await Task.WhenAll(tasks);
 
-                string chineseText = "";
-                for (int i = 0; i < tasks.Count; i++) {
-                    chineseText += tasks[i].Result.ToString() + "|";
-                }
-                var translatedText = _translationService.ConvertToDictionary(chineseText);
+                var translatedText = _translationService.ConvertToDictionary(tasks);
 
                 return Ok(new TranslationResponse
                 {

@@ -37,6 +37,6 @@ namespace TranslationAPI.Interface
         /// </summary>
         /// <param name="inputText">翻譯好的字串</param>
         /// <returns></returns>
-        Dictionary<string, string> ConvertToDictionary(string inputText);
+        Dictionary<string, string> ConvertToDictionary(List<Task<string>> inputText);
     }
 }

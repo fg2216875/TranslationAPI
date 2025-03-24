@@ -130,11 +130,16 @@ namespace WebApplication2.Service
         /// </summary>
         /// <param name="inputText"></param>
         /// <returns></returns>
-        public Dictionary<string, string> ConvertToDictionary(string inputText)
+        public Dictionary<string, string> ConvertToDictionary(List<Task<string>> tasks)
         {
+            string chineseText = "";
+            for (int i = 0; i < tasks.Count; i++) {
+                chineseText += tasks[i].Result.ToString() + "|";
+            }
+
             string pattern = @"\{#(\d+)\}:\s*(.*?)(?=\||\z)";
             //避免字串中出現"空白"或"換行符"影響轉換效果
-            inputText = inputText.Replace("\r\n", "").Replace("\n", "").Trim();
+            string inputText = chineseText.Replace("\r\n", "").Replace("\n", "").Trim();
             var matches = Regex.Matches(inputText, pattern);
 
             return matches.Cast<Match>()

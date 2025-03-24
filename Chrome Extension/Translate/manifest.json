@@ -20,7 +20,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["Scripts/axios.js"]
+      "js": ["Scripts/axios.js","content.js"]
     }
   ]
 }
